@@ -1,0 +1,16 @@
+generator,test_name,statistic,p_value,passed
+CrossState,Frequency (Monobit),1.728876,0.083831,1
+CrossState,Block Frequency (M=128),2477.468750,0.621786,1
+CrossState,Runs,160060.000000,0.827883,1
+CrossState,Serial (bit pairs),4.906550,0.176987,1
+CrossState,Serial Correlation (lag=1),0.000657,0.926005,1
+XorShiftACC,Frequency (Monobit),1.743018,0.081330,1
+XorShiftACC,Block Frequency (M=128),2663.093750,0.011680,1
+XorShiftACC,Runs,159350.000000,0.021863,1
+XorShiftACC,Serial (bit pairs),5.251550,0.152427,1
+XorShiftACC,Serial Correlation (lag=1),-0.002918,0.679846,1
+QuadXOR,Frequency (Monobit),0.346482,0.728980,1
+QuadXOR,Block Frequency (M=128),2452.250000,0.748636,1
+QuadXOR,Runs,159921.000000,0.780172,1
+QuadXOR,Serial (bit pairs),1.555000,0.673865,1
+QuadXOR,Serial Correlation (lag=1),-0.011828,0.094379,1
