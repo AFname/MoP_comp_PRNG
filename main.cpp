@@ -1,4 +1,4 @@
-﻿#include <iostream>
+#include <iostream>
 #include <fstream>
 #include <vector>
 #include <cmath>
@@ -8,15 +8,12 @@
 #include <cstdint>
 #include <cstdlib>
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  ГПСЧ 1: Перекрёстный генератор (Cross-State)
+//  ГПСЧ 1:
 //
 //  Два состояния a и b обновляют друг друга на каждом шаге:
 //    a = A * a + b
 //    b = B * b ^ a
-//  Ни одно состояние не эволюционирует независимо — каждое ломает
-//  предсказуемость другого. Выход — XOR старших частей обоих состояний.
-// ══════════════════════════════════════════════════════════════════════════════
+//  Выход — XOR старших частей обоих состояний
 struct CrossState {
     uint64_t a;
     uint64_t b;
@@ -38,17 +35,15 @@ struct CrossState {
     }
 };
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  ГПСЧ 2: XorShift с накопителем (XorShift-ACC)
+
+//  ГПСЧ 2: XorShift с acc
 //
-//  Стандартный XorShift64 порождает линейную последовательность.
-//  Добавляем отдельный аккумулятор acc, который монотонно растёт,
-//  суммируя каждое состояние:
+//  XorShift64 порождает линейную последовательность
+//  Добавляем  acc, который монотонно растёт ,суммируя каждое состояние:
 //    state — три XOR-сдвига
 //    acc  += state
 //    output = state ^ acc
-//  Аккумулятор нелинейно смещает выход на каждом шаге, ломая период.
-// ══════════════════════════════════════════════════════════════════════════════
+//  acc нелинейно смещает выход на каждом шаге, ломая период
 struct XorShiftACC {
     uint64_t state;
     uint64_t acc;
@@ -70,16 +65,12 @@ struct XorShiftACC {
     }
 };
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  ГПСЧ 3: Квадратичный XOR (QuadXOR)
+
+//  ГПСЧ 3: Квадратичный XOR
 //
-//  На каждом шаге возводим состояние в квадрат, XOR-им со сдвигом
-//  и нечётной константой C:
+//  На каждом шаге возводим состояние в квадрат, XOR со сдвигом и нечётной константой C:
 //    state = state * state ^ (state >> 17) ^ C
-//  Умножение на себя — нелинейная операция.
-//  Сдвиг + XOR перемешивают биты.
-//  Константа C не даёт состоянию схлопнуться в 0.
-// ══════════════════════════════════════════════════════════════════════════════
+//  Сдвиг + XOR перемешивают биты
 struct QuadXOR {
     uint64_t state;
     static constexpr uint64_t C = 0xddddddddbbbbbbbbULL;
@@ -96,9 +87,8 @@ struct QuadXOR {
     }
 };
 
-// ══════════════════════════════════════════════════════════════════════════════
+
 //  Статистические функции
-// ══════════════════════════════════════════════════════════════════════════════
 double calcMean(const std::vector<int>& v) {
     double s = 0;
     for (int x : v) s += x;
@@ -115,7 +105,7 @@ double calcCV(double sd, double m) {
     return m > 1e-9 ? sd / m * 100.0 : 0.0;
 }
 
-// Аппроксимация p-value хи-квадрат (Wilson-Hilferty)
+// Аппроксимация p-value хи-квадрат
 double chiPValue(double chi2, double df) {
     if (df <= 0 || chi2 < 0) return 0.0;
     double x = std::pow(chi2 / df, 1.0 / 3.0);
@@ -125,9 +115,7 @@ double chiPValue(double chi2, double df) {
     return 0.5 * std::erfc((x - mu) / (sigma * std::sqrt(2.0)));
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
 //  Критерий хи-квадрат: равномерность распределения
-// ══════════════════════════════════════════════════════════════════════════════
 struct ChiResult {
     double chi2;
     int    df;
@@ -150,9 +138,7 @@ ChiResult chiSquareTest(const std::vector<int>& data, int range, int bins = 20) 
     return { chi2, bins - 1, pv, pv > 0.05 };
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
 //  NIST SP 800-22 тесты
-// ══════════════════════════════════════════════════════════════════════════════
 struct TestResult {
     std::string name;
     double      statistic;
@@ -170,8 +156,8 @@ std::vector<int> toBits(const std::vector<int>& data) {
     return bits;
 }
 
-// Тест 1. Frequency / Monobit (NIST SP 800-22, §2.1)
-// Проверяет: число нулей ≈ числу единиц во всей последовательности
+// Тест 1. Frequency / Monobit (NIST SP 800-22)
+// Проверяет: число нулей == числу единиц во всей последовательности
 TestResult frequencyTest(const std::vector<int>& bits) {
     int n = static_cast<int>(bits.size());
     double S = 0;
@@ -181,8 +167,8 @@ TestResult frequencyTest(const std::vector<int>& bits) {
     return { "Frequency (Monobit)", Sobs, pv, pv >= 0.01 };
 }
 
-// Тест 2. Block Frequency (NIST SP 800-22, §2.2)
-// Доля единиц в каждом блоке длины M должна быть ≈ 1/2
+// Тест 2. Block Frequency (NIST SP 800-22)
+// Доля единиц в каждом блоке длины M должна быть == 1/2
 TestResult blockFrequencyTest(const std::vector<int>& bits, int M = 128) {
     int n = static_cast<int>(bits.size());
     int N = n / M;
@@ -199,7 +185,7 @@ TestResult blockFrequencyTest(const std::vector<int>& bits, int M = 128) {
     return { "Block Frequency (M=128)", chi2, pv, pv >= 0.01 };
 }
 
-// Тест 3. Runs (NIST SP 800-22, §2.3)
+// Тест 3. Runs (NIST SP 800-22)
 // Проверяет число чередований 0->1 и 1->0
 TestResult runsTest(const std::vector<int>& bits) {
     int n = static_cast<int>(bits.size());
@@ -217,9 +203,9 @@ TestResult runsTest(const std::vector<int>& bits) {
 }
 
 // Тест 4. Serial (пары бит)
-// Делим последовательность на неперекрывающиеся пары бит.
-// Пары 00, 01, 10, 11 должны встречаться с одинаковой частотой ≈ N/4.
-// Хи-квадрат с 3 степенями свободы проверяет равномерность распределения пар.
+// Делим последовательность на неперекрывающиеся пары бит
+// Пары 00, 01, 10, 11 должны встречаться с одинаковой частотой == N/4
+// Хи-квадрат с 3 степенями свободы проверяет равномерность распределения пар
 TestResult serialTest(const std::vector<int>& bits) {
     int n = static_cast<int>(bits.size());
     int pairs = n / 2; // число неперекрывающихся пар
@@ -244,7 +230,7 @@ TestResult serialTest(const std::vector<int>& bits) {
 }
 
 // Тест 5. Serial Correlation (автокорреляция при lag = 1)
-// H0: rho ≈ 0 — значения независимы
+// H0: rho == 0 — значения независимы
 TestResult autocorrelationTest(const std::vector<int>& data, int lag = 1) {
     int n = static_cast<int>(data.size());
     double mu = calcMean(data), num = 0, den = 0;
@@ -256,9 +242,7 @@ TestResult autocorrelationTest(const std::vector<int>& data, int lag = 1) {
     return { "Serial Correlation (lag=1)", rho, pv, pv >= 0.01 };
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
 //  Генерация выборки
-// ══════════════════════════════════════════════════════════════════════════════
 template<typename PRNG>
 std::vector<int> generateSample(PRNG& gen, int size, int range) {
     std::vector<int> v(size);
@@ -266,9 +250,7 @@ std::vector<int> generateSample(PRNG& gen, int size, int range) {
     return v;
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  Замер времени генерации N чисел — для наших генераторов
-// ══════════════════════════════════════════════════════════════════════════════
+//  Замер времени генерации N чисел для наших генераторов
 template<typename PRNG>
 double measureTime(uint64_t seed, int count, int range) {
     PRNG gen(seed);
@@ -279,9 +261,7 @@ double measureTime(uint64_t seed, int count, int range) {
     return std::chrono::duration<double, std::milli>(t1 - t0).count();
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  Замер времени генерации N чисел — для std::rand
-// ══════════════════════════════════════════════════════════════════════════════
+//  Замер времени генерации N чисел для std::rand
 double measureTimeStd(int count, int range) {
     std::srand(42);
     volatile int sink = 0;
@@ -291,9 +271,7 @@ double measureTimeStd(int count, int range) {
     return std::chrono::duration<double, std::milli>(t1 - t0).count();
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
 //  Обработка одного генератора
-// ══════════════════════════════════════════════════════════════════════════════
 template<typename PRNG>
 void processGenerator(const std::string& gname,
     int samples, int sampleSz, int range,
@@ -341,24 +319,22 @@ void processGenerator(const std::string& gname,
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
 //  main
-// ══════════════════════════════════════════════════════════════════════════════
 int main() {
-    constexpr int SAMPLES = 20;    // выборок на генератор (задание: >= 20)
-    constexpr int SAMPLE_SZ = 1000;  // элементов в выборке  (задание: >= 1000)
-    constexpr int RANGE = 65536; // диапазон [0, RANGE)  (задание: >= 5000)
+    constexpr int SAMPLES = 20;    // выборок на генератор 
+    constexpr int SAMPLE_SZ = 1000;  // элементов в выборке
+    constexpr int RANGE = 65536; // диапазон [0, RANGE)
 
     std::ofstream fStats("statistics.csv");
     if (!fStats) {
-        std::cerr << "Ошибка: не удалось открыть statistics.csv\n";
+        std::cerr << "не удалось открыть statistics.csv\n";
         return 1;
     }
     fStats << "generator,sample,mean,stddev,cv,chi2,df,p_value,uniform\n";
 
     std::ofstream fNIST("nist_tests.csv");
     if (!fNIST) {
-        std::cerr << "Ошибка: не удалось открыть nist_tests.csv\n";
+        std::cerr << "не удалось открыть nist_tests.csv\n";
         return 1;
     }
     fNIST << "generator,test_name,statistic,p_value,passed\n";
@@ -370,7 +346,7 @@ int main() {
     fStats.close();
     fNIST.close();
 
-    // ── Замер времени: от 1 000 до 1 000 000 элементов ────────────────────
+    //  Замер времени: от 1 000 до 1 000 000 элементов
     const std::vector<int> sizes = {
         1000, 2500, 5000, 10000, 25000,
         50000, 100000, 250000, 500000, 1000000
@@ -383,20 +359,11 @@ int main() {
     }
     fTiming << "size,CrossState,XorShiftACC,QuadXOR,StdRand\n";
 
-    std::cout << "\n══ Замер времени генерации ══\n";
-    std::cout << std::fixed << std::setprecision(3);
-
     for (int N : sizes) {
         double tCS = measureTime<CrossState>(42ULL, N, RANGE);
         double tACC = measureTime<XorShiftACC>(42ULL, N, RANGE);
         double tQX = measureTime<QuadXOR>(42ULL, N, RANGE);
         double tStd = measureTimeStd(N, RANGE);
-
-        std::cout << "N=" << std::setw(8) << N
-            << "  CrossState=" << std::setw(8) << tCS << " ms"
-            << "  XorShiftACC=" << std::setw(8) << tACC << " ms"
-            << "  QuadXOR=" << std::setw(8) << tQX << " ms"
-            << "  StdRand=" << std::setw(8) << tStd << " ms\n";
 
         fTiming << std::fixed << std::setprecision(4)
             << N << ","
@@ -404,6 +371,5 @@ int main() {
     }
     fTiming.close();
 
-    std::cout << "\nКонец\n";
     return 0;
 }
