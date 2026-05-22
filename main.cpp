@@ -89,18 +89,19 @@ struct QuadXOR {
 
 
 //  Статистические функции
+//  среднее
 double calcMean(const std::vector<int>& v) {
     double s = 0;
     for (int x : v) s += x;
     return s / static_cast<double>(v.size());
 }
-
+//  стандартное отклонение
 double calcStdDev(const std::vector<int>& v, double mean) {
     double s = 0;
     for (int x : v) s += (x - mean) * (x - mean);
     return std::sqrt(s / static_cast<double>(v.size()));
 }
-
+//  коэфицент вариации 
 double calcCV(double sd, double m) {
     return m > 1e-9 ? sd / m * 100.0 : 0.0;
 }
@@ -122,7 +123,7 @@ struct ChiResult {
     double pValue;
     bool   uniform; // H0 не отвергается при p > 0.05
 };
-
+//  хи-квадрат
 ChiResult chiSquareTest(const std::vector<int>& data, int range, int bins = 20) {
     int n = static_cast<int>(data.size());
     std::vector<int> obs(bins, 0);
